@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<canvas id="myCanvas" width="800" height="600"
+style="border:1px solid #000000;">
+Your browser does not support the HTML5 canvas tag.
+</canvas>
+
+
+<script>
+var canvas = document.getElementById('myCanvas');
+var canvasWidth  = canvas.width;
+var canvasHeight = canvas.height;
+var ctx = canvas.getContext('2d');
+
+
+genTree=function(p,l)
+{
+  var node={sub:null};
+  if (Math.random()<p && l>0 || l>5)
+  {
+    node.sub=[];
+    for (var i=0;i<4;i++)
+      node.sub.push(genTree(p*0.99,l-1));
+  }
+  return node;
+}
+
+
+
+
+drawTree=function(t,x,y,w,h)
+{
+  ctx.fillStyle = "white";
+  ctx.beginPath();
+  ctx.rect(x,y,w,h);
+  ctx.strokeStyle="black";
+  ctx.stroke();
+  ctx.closePath();
+  if (t.sub==null)
+  {
+    ctx.fill();
+  }
+  else
+  {
+    var wm=w/2;
+    var hm=h/2;
+    var xm=x+wm;
+    var ym=y+hm;
+    drawTree(t.sub[0],x,y,wm,hm);
+    drawTree(t.sub[1],xm,y,wm,hm);
+    drawTree(t.sub[2],x,ym,wm,hm);
+    drawTree(t.sub[3],xm,ym,wm,hm);
+  }
+}
+
+
+
+//albero
+var tree=genTree(0.95,10);
+//camera
+cam=[Math.random()*canvasWidth,Math.random()*canvasHeight];
+target=[Math.random()*canvasWidth,Math.random()*canvasHeight];
+
+
+function drawPt(x,y,color)
+{
+  ctx.beginPath();
+  ctx.arc(x,y,10,0,2*Math.PI);
+  ctx.strokeStyle=color;
+  ctx.stroke();
+  ctx.closePath();
+}
+
+
+function drawLine(x0,y0,x1,y1,color)
+{
+  ctx.beginPath();
+  ctx.moveTo(x0,y0);
+  ctx.lineTo(x1,y1);
+  ctx.strokeStyle=color;
+  ctx.stroke();
+}
+
+
+function clearCanvas()
+{
+  ctx.clearRect ( 0 , 0 , canvasWidth, canvasHeight );
+}
+
+function drawScene()
+{
+  
+
+  
+ 
+ 
+ 
+ clearCanvas();
+ //drawTree(tree,0,0,canvasWidth,canvasHeight);
+ 
+ traverse(tree,[0,0,canvasWidth,canvasHeight],cam,target,0);
+ 
+ drawPt(cam[0],cam[1],"blue");
+ drawPt(target[0],target[1],"red");
+ drawLine(cam[0],cam[1],target[0],target[1],"green");
+ 
+}
+
+
+
+function traverse(tree,bound,cam,target,l)
+{
+
+  d=[target[0]-cam[0],target[1]-cam[1]];
+  //controlla se il nodo è toccato dal raggio
+  var x0=bound[0];
+  var y0=bound[1];
+  var x1=bound[2];
+  var y1=bound[3];
+
+  
+  var tx0=(x0-cam[0])/d[0];
+  var tx1=(x1-cam[0])/d[0];
+  var ty0=(y0-cam[1])/d[1];
+  var ty1=(y1-cam[1])/d[1];
+  
+  
+  var rx0=Math.min(tx0,tx1);
+  var rx1=Math.max(tx0,tx1);
+  var ry0=Math.min(ty0,ty1);
+  var ry1=Math.max(ty0,ty1);
+  var r0=Math.max(rx0,ry0);
+  var r1=Math.min(rx1,ry1);
+  var r=Math.min(r0,r1);//punto di ingresso (non vale se sei nel nodo)
+    
+  
+  /*console.log("l:"+l);
+  console.log("leaf:"+(tree.sub==null));
+  console.log("bounds:"+bound);
+  console.log("tx0:"+tx0);
+  console.log("ty0:"+ty0);
+  console.log("tx1:"+tx1);
+  console.log("ty1:"+ty1);
+  console.log("rx0:"+rx0);
+  console.log("ry0:"+ry0);
+  console.log("rx1:"+rx1);
+  console.log("ry1:"+ry1);
+  console.log("r0:"+r0);
+  console.log("r1:"+r1);
+  console.log("===========");*/
+  
+  
+  
+  
+  if (r0<=r1 && (r0>=0 || r1>=0))
+  {
+    
+  
+    ctx.beginPath();
+    ctx.rect(x0,y0,x1-x0,y1-y0);
+    ctx.fillStyle="yellow";
+    ctx.strokeStyle="red";
+    ctx.closePath();
+    ctx.stroke();
+    if (tree.sub==null)
+      ctx.fill()
+  
+    //nodo toccato
+    if (tree.sub!=null)
+    {
+      var xm=(x0+x1)/2;
+      var ym=(y0+y1)/2;
+      l+=1;
+      traverse(tree.sub[0],[x0,y0,xm,ym],cam,target,l);
+      traverse(tree.sub[1],[xm,y0,x1,ym],cam,target,l);
+      traverse(tree.sub[2],[x0,ym,xm,y1],cam,target,l);
+      traverse(tree.sub[3],[xm,ym,x1,y1],cam,target,l);
+      
+    }
+    
+    
+    
+  }
+  
+}
+
+
+
+
+canvas.addEventListener('mousemove', function(event) {
+    var x = event.pageX - canvas.offsetLeft,
+        y = event.pageY - canvas.offsetTop;
+        if(event.shiftKey)
+	  cam=[x,y];
+	else
+	  target=[x,y];
+    drawScene();
+   
+   
+   });
+
+
+
+drawScene();
+
+
+
+
+</script>
+
+</body>
+</html>
